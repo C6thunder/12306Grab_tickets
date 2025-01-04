@@ -6,6 +6,7 @@ import time
 import random
 
 
+# 新增了JavaScript，速度全面提升
 # 这个函数用来判断是否有预订按钮是非常快的，自己尝试的其他方法都很慢~(^T^)~
 # 判断是否有预订按钮非常影响速度，如果有人感觉自己写的代码慢，大概率是因为这个
 def check_available_tickets():
