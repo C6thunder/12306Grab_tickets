@@ -4,9 +4,10 @@ from selenium.webdriver.common.keys import Keys
 from config import Config     # 信息保存在config.py里
 import time
 import random
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
-# 新增了JavaScript，速度全面提升
 # 这个函数用来判断是否有预订按钮是非常快的，自己尝试的其他方法都很慢~(^T^)~
 # 判断是否有预订按钮非常影响速度，如果有人感觉自己写的代码慢，大概率是因为这个
 def check_available_tickets():
@@ -120,19 +121,34 @@ def get_ticket(conf, driver, url):
             string = '//*[@id="normalPassenger_'+conf.passengernum+'"]'
             driver.find_element(by=By.XPATH, value=string).click()        # '//*[@id="normalPassenger_3"]'
             
+            # 点击确认购买学生票，如果不是学生，把这行注释了就行
+            # driver.find_element(by=By.XPATH, value='//*[@id="dialog_xsertcj_ok"]').click()
+            
             # 提交订单
             driver.find_element(by=By.XPATH, value='//*[@id="submitOrder_id"]').click()
-            
-            # 选座 F座
-            driver.find_element(by=By.XPATH, 
-                                value='//html/body/div[5]/div/div[5]/div[1]/div/div[2]/div[2]/div[3]/div[2]/div[2]/ul[2]/li[2]/a[@id="1F"]'
-                                ).click()
-            
 
+            
+            # # 选座 F座
+            # driver.find_element(by=By.XPATH, 
+            #                     value='//html/body/div[5]/div/div[5]/div[1]/div/div[2]/div[2]/div[3]/div[2]/div[2]/ul[2]/li[2]/a[@id="1F"]'
+            #                     ).click()
+            
+            # 等待元素加载
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="1F"]'))
+            )
+
+
+            # element = driver.find_element(by=By.XPATH,
+            #                               value='//html/body/div[5]/div/div[5]/div[1]/div/div[2]/div[2]/div[8]/a[2][@id="qr_submit_id" and @class="btn92s"]'
+            #                               )   # 这个是因为btn92s是可点击的
+            
             element = driver.find_element(by=By.XPATH,
-                                          value='//html/body/div[5]/div/div[5]/div[1]/div/div[2]/div[2]/div[8]/a[2][@id="qr_submit_id" and @class="btn92s"]'
+                                          value='//*[@id="qr_submit_id" and @class="btn92s"]'
                                           )   # 这个是因为btn92s是可点击的
             element.click()
+            
+
             
             print(f"{conf.trainnumber}次列车抢票成功，请尽快在10分钟内支付！")
             return
