@@ -43,6 +43,7 @@ def get_ticket(conf, driver, url):
 
  
     # 获取并点击右上角登录按钮
+    time.sleep(1)
     login = driver.find_element(by=By.ID, value='J-btn-login')
     login.click()
  
@@ -122,21 +123,25 @@ def get_ticket(conf, driver, url):
             driver.find_element(by=By.XPATH, value=string).click()        # '//*[@id="normalPassenger_3"]'
             
             # 点击确认购买学生票，如果不是学生，把这行注释了就行
-            # driver.find_element(by=By.XPATH, value='//*[@id="dialog_xsertcj_ok"]').click()
+            driver.find_element(by=By.XPATH, value='//*[@id="dialog_xsertcj_ok"]').click()
             
             # 提交订单
             driver.find_element(by=By.XPATH, value='//*[@id="submitOrder_id"]').click()
 
             
             # # 选座 F座
-            # driver.find_element(by=By.XPATH, 
-            #                     value='//html/body/div[5]/div/div[5]/div[1]/div/div[2]/div[2]/div[3]/div[2]/div[2]/ul[2]/li[2]/a[@id="1F"]'
-            #                     ).click()
-            
             # 等待元素加载
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="1F"]'))
-            )
+            # seat = WebDriverWait(driver, 20).until(
+            #     EC.presence_of_element_located((By.XPATH, '//html/body/div[5]/div/div[5]/div[1]/div/div[2]/div[2]/div[3]/div[2]/div[2]/ul[2]/li[2]/a[@id="1F"]'))
+            # )
+            # 上面那个测试时用不了了，改用更快的js
+            driver.execute_script('''
+                                    var element = document.evaluate(
+                                        '/html/body/div[6]/div/div[5]/div[1]/div/div[2]/div[2]/div[3]/div[2]/div[2]/ul[2]/li[2]/a[@id="1F"]', 
+                                        document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
+                                    ).singleNodeValue;
+                                    if (element) { element.click(); }
+                                ''')
 
 
             # element = driver.find_element(by=By.XPATH,
