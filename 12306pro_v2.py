@@ -122,6 +122,10 @@ def get_ticket(conf, driver, url):
                 # 选择乘车人
                 string = f'//*[@id="normalPassenger_{conf.passengernum}"]'
                 driver.find_element(by=By.XPATH, value=string).click()
+                
+                # 学生票判断
+                if conf.stu_seat:
+                    driver.find_element(by=By.XPATH, value='//*[@id="dialog_xsertcj_ok"]').click()
 
                 # 提交订单
                 driver.find_element(by=By.XPATH, value='//*[@id="submitOrder_id"]').click()
@@ -160,7 +164,7 @@ if __name__ == '__main__':
     url = 'https://www.12306.cn/index/'
 
     # 用chrome浏览器打开网页
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome()  
     get_ticket(conf, driver, url)
     time.sleep(10)
     driver.quit()
