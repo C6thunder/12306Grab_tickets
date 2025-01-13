@@ -8,8 +8,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # 增加车次平替功能
+# Z，K，G 已测试可用，K于Z相似所以 K 测试较少
 
-# 这个函数用来判断是否有预订按钮是非常快的，自己尝试的其他方法都很慢~(^T^)~
+# check_available_tickets()函数用来判断是否有预订按钮是非常快的，自己尝试的其他方法都很慢~(^T^)~
 # 判断是否有预订按钮非常影响速度，如果有人感觉自己写的代码慢，大概率是因为这个
 def check_available_tickets():
     # 使用 JavaScript 直接获取符合条件的车次信息
@@ -50,11 +51,10 @@ def get_ticket(conf, driver, url):
     # 扫码登录
     scan_QR = driver.find_element(by=By.XPATH, value='//*[@id="toolbar_Div"]/div[2]/div[2]/ul/li[2]/a')
     scan_QR.click()
-    driver.implicitly_wait(10)
+    driver.implicitly_wait(20)
 
     # 点击车票预订跳转到预订车票页面
     driver.find_element(by=By.XPATH, value='//*[@id="link_for_ticket"]').click()
-    driver.implicitly_wait(10)
 
     # 输入出发地和目的地信息
     # 出发地
@@ -81,10 +81,8 @@ def get_ticket(conf, driver, url):
     time.sleep(1)
     query_tag = driver.find_element(by=By.XPATH, value='//*[@id="query_ticket"]')
 
-    start = time.time()
 
     while True:
-        current_time = time.time()
 
         # 如果查询按钮可用，点击查询
         if query_tag.get_attribute('class') == "btn92s":
@@ -98,7 +96,8 @@ def get_ticket(conf, driver, url):
             time.sleep(random.uniform(0.097, 0.345))
             continue
 
-        print("找到可预订车次！")
+        print("12306出票！！")
+        start = time.time()
 
         # 尝试按顺序购买多个车次
         for train_number in conf.trainnumber:
@@ -127,18 +126,71 @@ def get_ticket(conf, driver, url):
                 if conf.stu_seat:
                     driver.find_element(by=By.XPATH, value='//*[@id="dialog_xsertcj_ok"]').click()
 
+                
+                if train_number.startswith("Z") or train_number.startswith("K"):   # 判断是否为Z系列 或 K系列
+                
+                    # Z,K系列  没找到软座，应该没有软座
+                    driver.find_element(by=By.XPATH, value='//*[@id="seatType_1"]').click()      
+                                    
+                    # Z,k 硬座 
+                    if conf.Z_seat==1:               
+                        # 依旧使用 JavaScript 来选择来加快速度   注意：选择型不能用简单的click点击
+                        log = driver.execute_script("""
+                            var selectElement = document.querySelector('#seatType_1');
+                            var option = selectElement.querySelector('option[value="1"]');
+                            if (option){
+                                option.selected = true;
+                                selectElement.dispatchEvent(new Event('change'));     // 触发选择
+                                return "找到座位！";
+                            } else {
+                                return "没有硬座了，听从12306分配";                  
+                            }
+                        """)
+
+                    # Z,k 硬卧
+                    elif conf.Z_seat==3:
+                        log = driver.execute_script("""
+                            var selectElement = document.querySelector('#seatType_1');
+                            var option = selectElement.querySelector('option[value="3"]');
+                            if (option){
+                                option.selected = true;
+                                selectElement.dispatchEvent(new Event('change'));
+                                return "找到座位！";
+                            } else {
+                                return "没有硬卧了，听从12306分配";                  
+                            }
+                        """)
+
+                    
+                    # Z,k 软卧
+                    if conf.Z_seat==4:
+                        log = driver.execute_script("""
+                            var selectElement = document.querySelector('#seatType_1');
+                            var option = selectElement.querySelector('option[value="4"]');
+                            if (option){
+                                option.selected = true;
+                                selectElement.dispatchEvent(new Event('change'));
+                                return "找到座位！";
+                            } else {
+                                return "没有软卧了，听从12306分配";                  
+                            }
+                        """)
+                    # Z K如果没抢到要求座位，会抢12306默认座位
+                    
+
                 # 提交订单
                 driver.find_element(by=By.XPATH, value='//*[@id="submitOrder_id"]').click()
 
+                print(log)
                 # # 选座 F座
-                # 等待元素加载
-                driver.execute_script('''
-                    var element = document.evaluate(
-                        '/html/body/div[6]/div/div[5]/div[1]/div/div[2]/div[2]/div[3]/div[2]/div[2]/ul[2]/li[2]/a[@id="1F"]', 
-                        document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
-                    ).singleNodeValue;
-                    if (element) { element.click(); }
-                ''')
+                if train_number.startswith("G"):
+                    driver.execute_script('''
+                        var element = document.evaluate(
+                            '/html/body/div[6]/div/div[5]/div[1]/div/div[2]/div[2]/div[3]/div[2]/div[2]/ul[2]/li[2]/a[@id="1F"]', 
+                            document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
+                        ).singleNodeValue;
+                        if (element) { element.click(); }
+                    ''')
 
                 # 点击确认支付
                 element = driver.find_element(by=By.XPATH,
@@ -146,7 +198,9 @@ def get_ticket(conf, driver, url):
                                               )
                 element.click()
 
-                print(f"{train_number}次列车抢票成功，请尽快在10分钟内支付！")
+                current_time = time.time()
+
+                print(f"！！！{train_number}次列车抢票成功，总用时{current_time-start}秒，请尽快在10分钟内支付！")
                 return
             else:
                 print(f"{train_number}次车次未找到可预订票，继续尝试下一个车次。")
@@ -164,7 +218,7 @@ if __name__ == '__main__':
     url = 'https://www.12306.cn/index/'
 
     # 用chrome浏览器打开网页
-    driver = webdriver.Chrome()  
+    driver = webdriver.Chrome()                       
     get_ticket(conf, driver, url)
     time.sleep(10)
     driver.quit()
